@@ -22,19 +22,27 @@ def segmentation():
     # selecting components which have more than 10 elements in them
     selected_labels = conn.refining_comps()
     res_z_vals = conn.getting_max_z(selected_labels, occ_grid)
+    
+    # plot point clouds first to add bounding boxes later
+    fix,ax = plt.subplots(figsize=(8,6),dpi=300)
+    rows = np.repeat(list(range(0,668)), 668)
+    cols = np.tile(list(range(0,668)), 668)
+    ax.scatter(rows, cols, occ_grid[rows,cols], alpha=0.5)
+
+
     # Applying eigen decomposition to each component
     for i in selected_labels:
         indexes = np.where(res == i)
         cck = np.zeros((2, len(indexes[0])))
         mod_cck = conn.number_in_comps[i]
-        print(mod_cck)
+#         print(mod_cck)
         cck[0,:] = indexes[0]
         cck[1,:] = indexes[1]
         cck_trans = cck.transpose()
         # computing co-variance matrix
         cov_mat = np.matmul(cck , cck_trans)
         e_vals, e_vecs = LA.eig(cov_mat)
-        print(e_vals)
+#         print(e_vals)
 
         new_eigen_vecs = np.column_stack((e_vecs[:,0], e_vecs[:,1]))
         # calculating the new coordinates
@@ -59,19 +67,16 @@ def segmentation():
                            [x_bar+width, y_bar+height, 0],[x_bar-width, y_bar+height, 0],
                            [x_bar-width, y_bar-height, z_value],[x_bar+width, y_bar-height, z_value],
                            [x_bar+width, y_bar+height, z_value],[x_bar-width, y_bar+height, z_value]])
-#         print(points)
+        #print(points)
 
-        if mod_cck > 50:
-            fix,ax = plt.subplots()
-            rows = np.repeat(list(range(0,668)), 668)
-            cols = np.tile(list(range(0,668)), 668)
-            ax.scatter(rows, cols, occ_grid[rows,cols], alpha=0.5)
+        if mod_cck >= 100:
             plotPoints(points, ax)
-            plt.show()
+    #break
+    plt.show()
         
 
 def plotPoints(points, ax):
-    scaling = 5.0
+    scaling = 0.2
     points[4:8,1] = points[4:8,1] + (points[4:8,2]/scaling)
     points[4:8,0] = points[4:8,0] + (points[4:8,2]/scaling)
     points[4:8,:] = np.flipud(points[4:8,:])
@@ -91,3 +96,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+
