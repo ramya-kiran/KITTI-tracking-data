@@ -2,8 +2,11 @@ import numpy as np
 import time
 import connected
 from occupancy_grid import *
-from scipy import linalg as LA
+from numpy import linalg as LA
 import matplotlib.image as mpimg
+from numpy.linalg import inv
+from mpl_toolkits.mplot3d import Axes3D
+import matplotlib.pyplot as plt
 
 
 '''
@@ -34,19 +37,22 @@ def segmentation():
     for i in selected_labels:
         indexes = np.where(res == i)
         cck = np.zeros((2, len(indexes[0])))
+        cck_old = np.zeros((2, len(indexes[0])))
         mod_cck = conn.number_in_comps[i]
-#         print(mod_cck)
-        cck[0,:] = indexes[0]
-        cck[1,:] = indexes[1]
+        cck_old[0,:] = indexes[0] 
+        cck_old[1,:] = indexes[1]
+        cck[0,:] = indexes[0] - np.mean(indexes[0])
+        cck[1,:] = indexes[1] - np.mean(indexes[1])
+
         cck_trans = cck.transpose()
         # computing co-variance matrix
-        cov_mat = np.matmul(cck , cck_trans)
-        e_vals, e_vecs = LA.eig(cov_mat)
-#         print(e_vals)
+        cov_mat = np.matmul(cck , cck_trans)/mod_cck
+        e_vals, e_vecs = LA.eigh(cov_mat)
 
         new_eigen_vecs = np.column_stack((e_vecs[:,0], e_vecs[:,1]))
+        
         # calculating the new coordinates
-        new_coords = np.matmul(new_eigen_vecs, cck)
+        new_coords = np.matmul(new_eigen_vecs, cck_old)
         x_min = np.min(new_coords[0,:])
         x_max = np.max(new_coords[0,:])
         y_min = np.min(new_coords[1,:])
@@ -57,21 +63,24 @@ def segmentation():
         height = (y_max - y_min)/2
         
         # center of gravity of each component.
-        x_bar = np.sum(indexes[0])/mod_cck
-        y_bar = np.sum(indexes[1])/mod_cck
+        x_bar = np.sum(new_coords[0,:])/mod_cck
+        y_bar = np.sum(new_coords[1,:])/mod_cck
         
         z_value = res_z_vals[i]
         
-        # Plotting the output
-        points = np.array([[x_bar-width, y_bar-height, 0],[x_bar+width, y_bar-height, 0],
-                           [x_bar+width, y_bar+height, 0],[x_bar-width, y_bar+height, 0],
-                           [x_bar-width, y_bar-height, z_value],[x_bar+width, y_bar-height, z_value],
-                           [x_bar+width, y_bar+height, z_value],[x_bar-width, y_bar+height, z_value]])
-        #print(points)
+        # Rotating back to image coordinates
+        twod_points = np.array([[x_bar-width, y_bar-height],[x_bar+width, y_bar-height],
+                           [x_bar+width, y_bar+height],[x_bar-width, y_bar+height]])
 
-        if mod_cck >= 100:
+        new_points = np.matmul(new_eigen_vecs.transpose(), twod_points.transpose()) 
+        points = np.concatenate((new_points.transpose(), np.zeros((4,1))), axis=1)
+        points =  np.vstack((points, points))
+        points[4:,2] = z_value
+
+        # Plotting the components greater than 25
+        if mod_cck >= 25:
             plotPoints(points, ax)
-    #break
+
     plt.show()
         
 
