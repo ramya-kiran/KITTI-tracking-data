@@ -2,8 +2,7 @@ import numpy as np
 import time
 
 
-fname = '000012.bin'
-def occupancy_grid():
+def occupancy_grid(fname):
     tictime = time.time()
     # reading the binary file to a numpy array
     orig_data = np.fromfile(fname, dtype=np.float32)
@@ -62,5 +61,5 @@ def occupancy_grid():
 
 
 
-occ_grid = occupancy_grid()
+# occ_grid = occupancy_grid()
 

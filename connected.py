@@ -68,8 +68,8 @@ class Connected:
         return self.max_z
     
 
-g = np.random.randint(0,2, size=(10,10))
-print(g)
-c = Connected(g)
-res = c.connected_components()
-print(res)
+# g = np.random.randint(0,2, size=(10,10))
+# print(g)
+# c = Connected(g)
+# res = c.connected_components()
+# print(res)
