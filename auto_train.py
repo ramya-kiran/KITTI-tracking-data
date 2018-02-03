@@ -23,8 +23,6 @@ if __name__ == '__main__':
     points = tf.placeholder(tf.float32, [None, N,WIDTH, CHANNEL], name='points')
     labels = tf.placeholder(tf.float32, [None, N,WIDTH, CHANNEL], name='labels')
 
-    decoder_out = auto_model.model(points)
-
     loss = tf.nn.sigmoid_cross_entropy_with_logits(labels=labels, logits=decoder_out)
 
     cost = tf.reduce_mean(loss)

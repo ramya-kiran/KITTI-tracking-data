@@ -29,17 +29,17 @@ def model(inputs):
 
     conv5 = conv_layer(upsample2, [1,3], 28, 28, "conv5", bn_norm = True, training_phase, 'SAME')
 
-    upsample3 = tf.image.resize_images(conv5, size=(50,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    upsample3 = tf.image.resize_images(conv5, size=(100,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     conv6 = conv_layer(upsample3, [1,3], 28, 28, "conv6", bn_norm = True, training_phase, 'SAME')
 
-    upsample4 = tf.image.resize_images(conv6, size=(100,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    upsample4 = tf.image.resize_images(conv6, size=(200,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
     conv7 = conv_layer(upsample4, [1,3], 28, 28, "conv7", bn_norm = True, training_phase, 'SAME')
-
-    upsample5 = tf.image.resize_images(conv7, size=(200,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    
     conv8 = conv_layer(upsample5, [1,3], 28, 14, "conv8", bn_norm = True, training_phase, 'SAME')
     conv9 = conv_layer(conv8, [1,3], 14, 7, "conv9", bn_norm = True, training_phase, 'SAME')
     conv10 = conv_layer(conv9, [1,3], 7, 1, "conv10", bn_norm = True, training_phase, 'SAME')
 
+    conv10 = conv10.reshape(batch_size, N, 3)
 
     return conv10
 
