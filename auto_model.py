@@ -1,33 +1,58 @@
 import tensorflow as tf
 
-N = 200 
+''' 
+Ref : https://github.com/mchablani/deep-learning/blob/master/autoencoder/Convolutional_Autoencoder.ipynb '''
+
+N = 200
+WIDTH = 3
+CHANNEL = 1 
 
 def model(inputs):
+    # Encoder Module
 	batch_size = inputs.shape[0]
 	mod_input = tf.expand_dims(inputs, -1)
 
-	layer1 = conv_layer(mod_input, [1,3], 1, 7, "conv1", bn_norm = True, training_phase)
+	conv1 = conv_layer(mod_input, [1,3], 1, 7, "conv1", bn_norm = True, training_phase, 'VALID')
 
-	layer2 = conv_layer(layer1, [1,1], 7, 14, "conv2", bn_norm = True, training_phase)
+	conv2 = conv_layer(layer1, [1,1], 7, 14, "conv2", bn_norm = True, training_phase, 'VALID')
 
-	layer3 = conv_layer(layer2, [1,1], 14, 28, "conv2", bn_norm = True, training_phase)
+	conv3 = conv_layer(layer2, [1,1], 14, 28, "conv3", bn_norm = True, training_phase, 'VALID')
 
 	pool1 = pool_operations(layer3, [1,N,1,1], [1,2,2,1], "pool1")
 
-	fin_out = tf.reshape(pool1, [batch_size, -1])
+    # Decoder Module
+    upsample1 = tf.image.resize_images(inputs, size=(25,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
 
-	return fin_out
+    conv4 = conv_layer(upsample1, [1,3], 28, 28, "conv4", bn_norm = True, training_phase, 'SAME')
+
+    upsample2 = tf.image.resize_images(conv4, size=(50,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+
+    conv5 = conv_layer(upsample2, [1,3], 28, 28, "conv5", bn_norm = True, training_phase, 'SAME')
+
+    upsample3 = tf.image.resize_images(conv5, size=(50,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    conv6 = conv_layer(upsample3, [1,3], 28, 28, "conv6", bn_norm = True, training_phase, 'SAME')
+
+    upsample4 = tf.image.resize_images(conv6, size=(100,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    conv7 = conv_layer(upsample4, [1,3], 28, 28, "conv7", bn_norm = True, training_phase, 'SAME')
+
+    upsample5 = tf.image.resize_images(conv7, size=(200,3), method=tf.image.ResizeMethod.NEAREST_NEIGHBOR)
+    conv8 = conv_layer(upsample5, [1,3], 28, 14, "conv8", bn_norm = True, training_phase, 'SAME')
+    conv9 = conv_layer(conv8, [1,3], 14, 7, "conv9", bn_norm = True, training_phase, 'SAME')
+    conv10 = conv_layer(conv9, [1,3], 7, 1, "conv10", bn_norm = True, training_phase, 'SAME')
+
+
+    return conv10
 
 
 
-def conv_layer(in_image, fil_size, no_in, no_out, name, bn_norm, training_phase):
+def conv_layer(in_image, fil_size, no_in, no_out, name, bn_norm, training_phase, pad_type):
     with tf.variable_scope(name):
         weights = tf.get_variable("weights", [fil_size[0], fil_size[1], no_in, no_out], 
         	initializer=tf.contrib.layers.xavier_initializer())
         biases = tf.get_variable("biases", [no_out], initializer=tf.constant_initializer(0.0))
         tf.summary.histogram('weights', weights)
         tf.summary.histogram('biases', biases)
-        conv = tf.nn.conv2d(in_image, weights, strides=[1,1,1,1], padding='SAME')
+        conv = tf.nn.conv2d(in_image, weights, strides=[1,1,1,1], padding=pad_type)
         conv = tf.nn.bias_add(conv,biases)
 
         if bn_norm:
